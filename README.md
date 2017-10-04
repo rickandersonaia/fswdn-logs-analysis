@@ -21,7 +21,8 @@ This is a report of the 10 days that have had the most page view errors. The
 report displayed in a list format. It displays the date, the error rate as
 a percentage of page views per error and the total error count
 
-##Running the program
+## Running the program
+
 To run the program type `python3 logs.py` in the console from the directory 
 that this repository resides.  It is dependent on the database 
 configuration for the Udacity Full Stack Web Developer Nanodegree course
