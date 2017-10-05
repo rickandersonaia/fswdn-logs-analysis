@@ -15,9 +15,9 @@ This is a report of the most popular authors by page views as a plain text
 table.  It ranks the authors by page views displaying the author's name and 
 how many page views their articles have relieved
 
-**Dates with greatest number of page view errors**
+**Dates with page view errors of greater than 1%**
 
-This is a report of the 10 days that have had the most page view errors. The 
+This is a report of the days that have had page view errors of greater than 1%. The 
 report displayed in a list format. It displays the date, the error rate as
 a percentage of page views per error and the total error count
 
