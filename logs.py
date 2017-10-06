@@ -47,17 +47,26 @@ def most_popular_authors_report():
     print_tabular_report(widths, columns, report_data['posts'], report_title)
 
 
-# Generates a report of the 10 days that have had the most errors when a page
-# was requested displayed in a list format showing the date, the error rate as
+# Generates a report of the days that have an error rate of more than 1%
+# displayed in a list format showing the date, the error rate as
 # a percentage of page views per error and the total error count
 
 
 def dates_with_errors_over_one_percent_report():
-    select_statement = "SELECT time::DATE AS date, count(*) FILTER(" \
-                       "WHERE status != '200 OK') AS errors, " \
-                       "count(*) AS views " \
-                       "FROM log " \
-                       "GROUP BY date ORDER BY errors DESC LIMIT 10"
+    select_statement = "WITH error_agg_table AS ( " \
+                       "SELECT time::DATE AS date, count(*) AS errors " \
+                       "FROM log WHERE status != '200 OK' " \
+                       "GROUP BY date ), " \
+                       "views_agg_table AS ( " \
+                       "SELECT time::DATE AS date, count(*) AS views " \
+                       "FROM log GROUP BY date )" \
+                       "SELECT error_agg_table.date AS date, " \
+                       "error_agg_table.errors, " \
+                       "views_agg_table.views " \
+                       "FROM views_agg_table JOIN error_agg_table " \
+                       "ON error_agg_table.date = views_agg_table.date " \
+                       "WHERE errors::DECIMAL / views >= 0.01" \
+                       "ORDER BY error_agg_table.errors DESC LIMIT 10"
 
     raw_data = get_data_as_dictionary(select_statement)
     report_data = format_date_in_table(raw_data, 'date')
@@ -79,19 +88,15 @@ def format_date_in_table(table, key):
 
 
 # Adds an error rate column to the dictionary. It calculates the error rate
-# and then formats it into an easily read format.  If the error rate is greater
-# than 1% the data is formatted. Once formatted it adds the
-# new element to a new dictionary
+# and then formats it into an easily read format. Once formatted it adds the
+# new element to a the dictionary
 
 
-def add_error_rate(unformatted_report_data):
-    report_data = []
-    for row in unformatted_report_data:
+def add_error_rate(report_data):
+    for row in report_data:
         errors = row['errors']
         views = row['views']
-        if float(errors) / float(views) >= 0.01:
-            row['error_rate'] = '{0:.2%}'.format(float(errors) / float(views))
-            report_data.append(dict(row))
+        row['error_rate'] = '{0:.2%}'.format(float(errors) / float(views))
 
     return report_data
 
@@ -157,9 +162,11 @@ def print_dates_with_errors_over_one_percent_report(report_data, report_title):
     print(report_title)
     print('')
     for row in report_data:
-        print("{} - {} of page views had errors ({} errors)".
-              format(row['date'], row['error_rate'], row['errors']))
+        print("{} - {} of page views had errors with {} errors in {} views".
+              format(row['date'], row['error_rate'], row['errors'],
+                     row['views']))
     print('')
+
 
 if __name__ == "__main__":
     most_popular_articles_report()
